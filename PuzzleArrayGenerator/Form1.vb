@@ -5,7 +5,6 @@ Imports System.IO
 
 
 Public Class Form1
-    Private Const WM_CLIPBOARDUPDATE As Integer = &H31D
 
     Public outputFileName As String = "C:\Users\Diane\AndroidStudioProjects\Fragmental\puzzle_data.txt"
     Public strPuzzleData As String = ""
@@ -20,7 +19,6 @@ Public Class Form1
         Public Sub setValue(strPuzzle As String)
             Me.strPuzzle = strPuzzle
         End Sub
-
     End Class
 
     Structure Pair
