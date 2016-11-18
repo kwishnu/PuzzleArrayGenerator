@@ -43,6 +43,7 @@ Partial Class Form1
         Me.btnThreeWords = New System.Windows.Forms.Button()
         Me.btnAddSnippet = New System.Windows.Forms.Button()
         Me.txtSnippet = New System.Windows.Forms.TextBox()
+        Me.btnDisableOnChange = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'btnCullPuzzleData
@@ -216,12 +217,22 @@ Partial Class Form1
         Me.txtSnippet.Size = New System.Drawing.Size(132, 20)
         Me.txtSnippet.TabIndex = 17
         '
+        'btnDisableOnChange
+        '
+        Me.btnDisableOnChange.Location = New System.Drawing.Point(469, 190)
+        Me.btnDisableOnChange.Name = "btnDisableOnChange"
+        Me.btnDisableOnChange.Size = New System.Drawing.Size(75, 20)
+        Me.btnDisableOnChange.TabIndex = 18
+        Me.btnDisableOnChange.Text = "Allow entry..."
+        Me.btnDisableOnChange.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AcceptButton = Me.btnEnter
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(730, 225)
+        Me.Controls.Add(Me.btnDisableOnChange)
         Me.Controls.Add(Me.txtSnippet)
         Me.Controls.Add(Me.btnAddSnippet)
         Me.Controls.Add(Me.btnThreeWords)
@@ -269,4 +280,5 @@ Partial Class Form1
     Friend WithEvents btnThreeWords As Button
     Friend WithEvents btnAddSnippet As Button
     Friend WithEvents txtSnippet As TextBox
+    Friend WithEvents btnDisableOnChange As Button
 End Class

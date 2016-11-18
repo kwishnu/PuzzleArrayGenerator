@@ -1,7 +1,6 @@
 ﻿Imports System.ComponentModel
 Imports System.IO
-'Imports System.Runtime.InteropServices
-
+'git remote set-url origin https://github.com/kwishnu/PuzzleArrayGenerator.git
 
 
 Public Class Form1
@@ -1023,6 +1022,8 @@ Public Class Form1
     Public strClipboard As String = ""
     Public started As Boolean = False
     Public onWord As Boolean = True
+    Public detectingOnChange As Boolean = True
+
 
     Private Sub Timer1_Tick(sender As Object, e As EventArgs) Handles Timer1.Tick
         strClipboard = System.Windows.Forms.Clipboard.GetText()
@@ -1075,7 +1076,9 @@ Public Class Form1
     End Sub
 
     Private Sub txtWord_TextChanged(sender As Object, e As EventArgs) Handles txtWord.TextChanged
-        txtClue.Focus()
+        If (detectingOnChange) Then
+            txtClue.Focus()
+        End If
     End Sub
 
     Private Sub btnTwoWords_Click(sender As Object, e As EventArgs) Handles btnTwoWords.Click
@@ -1099,6 +1102,17 @@ Public Class Form1
 
         txtClue.Text = txtSnippet.Text + " " + strNew
     End Sub
+
+    Private Sub btnDisableOnChange_Click(sender As Object, e As EventArgs) Handles btnDisableOnChange.Click
+        If (detectingOnChange) Then
+            detectingOnChange = False
+            btnDisableOnChange.Text = "Reset"
+        Else
+            detectingOnChange = True
+            btnDisableOnChange.Text = "Allow entry..."
+        End If
+    End Sub
+
 
 
 
