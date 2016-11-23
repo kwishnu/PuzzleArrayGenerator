@@ -47,12 +47,15 @@ Public Class Form1
         End Sub
     End Structure
 
-    Structure numbers
+    Class numbers
         Public num As Integer
         Public Sub New(num As Integer)
             Me.num = num
         End Sub
-    End Structure
+        Public Sub setNum(sent As Integer)
+            Me.num = sent
+        End Sub
+    End Class
 
     Class wordParameters
         Public wordLength As Integer
@@ -355,10 +358,10 @@ Public Class Form1
             Console.WriteLine(err.Message)
         End Try
 
-        Dim arrOfNumberOfWords() As Integer = {12, 15} '6,{8, 10}
+        Dim arrOfNumberOfWords() As Integer = {9, 12}
         Dim Rand As New Random()
         Dim Index As Integer = Rand.Next(0, arrOfNumberOfWords.Length - 1)
-        Dim numberOfWords As Integer = arrOfNumberOfWords(Index) 'Picks either 6, 8, or 10 for number of words
+        Dim numberOfWords As Integer = arrOfNumberOfWords(Index) 'Picks either 12 or 15 for number of words
         Dim accumNumFragmentsIs20 As Boolean = False
         Dim keyFragLengthPresent As Boolean = False
         Dim listOfWordLengths As New List(Of wordParameters)
@@ -366,10 +369,8 @@ Public Class Form1
 
         Do Until accumNumFragmentsIs20
             For makeCombo As Integer = 0 To numberOfWords - 1
-                'Dim rnd1 As New Random()
-                'Dim rnd2 As New Random()
                 Do Until keyFragLengthPresent
-                    Dim i1 As Integer = Rand.Next(0, 8) '0 to 8, representing length of word from 4 to 12  ....GetUpperBound()
+                    Dim i1 As Integer = Rand.Next(0, 8) '0 to 8, representing length of word from 4 to 12
                     Dim i2 As Integer = Rand.Next(0, 5) '0 to 5, => 6 different arrangements of fragments
 
                     If (strArrOfFragCombos(i1, i2).indexof(keyFragLength.ToString) > -1) Then
@@ -385,16 +386,31 @@ Public Class Form1
                 totalFrags += listOfWordLengths(checkTotal).fragArrangement.Length
             Next
 
-            If (totalFrags = 20 + numberOfWords) Then
+            If (totalFrags = 20 + numberOfWords - 3) Then
                 accumNumFragmentsIs20 = True
             Else
                 listOfWordLengths.Clear()
             End If
         Loop
 
+        Dim threeWithoutFrag As New List(Of numbers) 'Pick three random words that won't necessarily contain keyFrag
+        For ccc As Integer = 0 To listOfWordLengths.Count - 1
+            threeWithoutFrag.Add(New numbers(ccc))
+        Next
+        threeWithoutFrag = ShuffleNumList(threeWithoutFrag)
+        For cc As Integer = 3 To listOfWordLengths.Count - 1
+            threeWithoutFrag.RemoveAt(3)
+        Next
+
+        Dim gotoNextWord As Boolean = False
 
         For j As Integer = 0 To listOfWordLengths.Count - 1
             For loopThroughList As Integer = 0 To wordClueList.Count - 1
+                If (gotoNextWord) Then
+                    gotoNextWord = False
+                    Exit For
+                End If
+
                 Dim wordToCheck As String = Nothing
 
                 If (wordClueList(loopThroughList).flag = 0) Then 'we haven't looked at this word yet
@@ -402,6 +418,25 @@ Public Class Form1
                 Else
                     Continue For
                 End If
+
+                If (threeWithoutFrag(0).num = j Or threeWithoutFrag(1).num = j Or threeWithoutFrag(2).num = j) Then 'Won't require these three words to contain keyFrag
+
+                    For internalLoop As Integer = 0 To wordClueList.Count - 1
+                        Dim aWord As String = Nothing
+                        If (wordClueList(internalLoop).flag = 0) Then 'we haven't looked at this word yet
+                            aWord = wordClueList(internalLoop).word
+                        Else
+                            Continue For
+                        End If
+                        If (aWord.Length = listOfWordLengths(j).wordLength) Then
+                            wordClueList(internalLoop).setFlag(1)
+                            listOfWordLengths(j).changeIndex(internalLoop)
+                            gotoNextWord = True
+                            Exit For
+                        End If
+                    Next
+                End If
+
                 If (wordToCheck.Substring(0, keyFragLength) = keyFrag) Or (wordToCheck.Substring(wordToCheck.Length - keyFragLength, keyFragLength) = keyFrag) Or (wordToCheck.IndexOf(keyFrag) > keyFragLength And wordToCheck.IndexOf(keyFrag) < wordToCheck.Length - (keyFragLength + 2)) Then
                     wordToCheck = Replace(wordToCheck, keyFrag, "^",, 1)
                     If (wordToCheck.Length + (keyFragLength - 1) = listOfWordLengths(j).wordLength) Then 'this word is the right length
@@ -739,7 +774,7 @@ Public Class Form1
 
         Dim puzzleStringsFilePath As String = "C:\Users\Diane\AndroidStudioProjects\Fragmental\puzzleStrings.txt"
         Dim outPathUsed As String = "C:\Users\Diane\AndroidStudioProjects\Fragmental\_used.txt"
-        Dim outPathKeep As String = "C:\Users\Diane\AndroidStudioProjects\Fragmental\test.txt"
+        Dim outPathKeep As String = "C:\Users\Diane\AndroidStudioProjects\Fragmental\_out3.txt"
 
         Try
             Dim sw As StreamWriter = File.AppendText(puzzleStringsFilePath)
@@ -747,7 +782,28 @@ Public Class Form1
             Dim theWord As String = ""
             Dim theClue As String = ""
 
-            For Each item In listOfWordLengths
+            For Each item In listOfWordLengths 'last chance to try to assign remaining words...
+                If (item.listIndex < 0) Then
+                    Dim aWord As String = Nothing
+                    For loopx As Integer = 0 To wordClueList.Count - 1
+                        aWord = ""
+                        If (wordClueList(loopx).flag = 0) Then 'we haven't looked at this word yet
+                            aWord = wordClueList(loopx).word
+                        Else
+                            Continue For
+                        End If
+                        If (item.wordLength = aWord.Length And aWord.IndexOf(keyFrag) < 0) Then
+                            wordClueList(loopx).setFlag(1)
+                            item.changeIndex(loopx)
+                            Exit For
+                        End If
+                    Next
+
+                End If
+
+
+
+
                 theWord = ""
                 If (item.listIndex > -1) Then
                     theWord = wordClueList(item.listIndex).word
@@ -798,17 +854,20 @@ Public Class Form1
 
         Dim usedStrings As New List(Of PuzzString)
         Dim keepStrings As New List(Of PuzzString)
-        Dim bunchOfNumbers As New List(Of numbers)
+        Dim bunchOfNumbers As New Dictionary(Of Integer, Integer)
+        Dim keyCount As Integer = 0
 
         For member As Integer = 0 To listOfWordLengths.Count - 1
-            Dim strPuz As String = wordClueList(listOfWordLengths(member).listIndex).word + "|" + wordClueList(listOfWordLengths(member).listIndex).clue
-            usedStrings.Add(New PuzzString(strPuz))
-            bunchOfNumbers.Add(New numbers(listOfWordLengths(member).listIndex))
+            If (listOfWordLengths(member).listIndex) > -1 Then
+                Dim strPuz As String = wordClueList(listOfWordLengths(member).listIndex).word + "|" + wordClueList(listOfWordLengths(member).listIndex).clue
+                usedStrings.Add(New PuzzString(strPuz))
+                bunchOfNumbers.Add(keyCount, listOfWordLengths(member).listIndex)
+                keyCount = keyCount + 1
+            End If
         Next
 
         Try
             Dim sy As StreamWriter = File.AppendText(outPathUsed)
-
             For Each line In usedStrings
                 sy.WriteLine(line.strPuzzle)
             Next
@@ -816,37 +875,27 @@ Public Class Form1
         Catch ex As Exception
         End Try
 
-        Dim counter As Integer = 0
-
-        For Each strLine In wordClueList
-
-            If Not bunchOfNumbers.Contains(New numbers(counter)) Then
-                keepStrings.Add(New PuzzString(wordClueList(counter).word + "|" + wordClueList(counter).clue))
-            End If
-
-            counter = counter + 1
-        Next
-
         Try
             Dim sz As StreamWriter = File.CreateText(outPathKeep)
+            Dim counter As Integer = 0
 
-            For Each line In keepStrings
-                sz.WriteLine(line.strPuzzle)
+            For Each strLine In wordClueList
+                If Not bunchOfNumbers.ContainsValue(counter) Then
+                    sz.WriteLine(strLine.word + "|" + strLine.clue)
+                End If
+                counter = counter + 1
             Next
             sz.Close()
         Catch ex As Exception
         End Try
-
-
-
     End Sub
 
 
     Private Sub btnRandomizeFile_Click(sender As Object, e As EventArgs) Handles btnRandomizeFile.Click
 
         Dim puzzleString As String = ""
-        Dim filePath As String = "C:\Users\Diane\AndroidStudioProjects\FragMental\test.txt"
-        Dim filePathOut As String = "C:\Users\Diane\AndroidStudioProjects\FragMental\test.txt"
+        Dim filePath As String = "C:\Users\Diane\AndroidStudioProjects\FragMental\_out3.txt"
+        Dim filePathOut As String = "C:\Users\Diane\AndroidStudioProjects\FragMental\_out3.txt"
         Dim allLines As New List(Of PuzzString)
 
         Try
@@ -1003,6 +1052,22 @@ Public Class Form1
 
     End Function
 
+    Public Function ShuffleNumList(numbs)
+
+        Dim x As Integer
+        Dim r As Random = New Random()
+        Dim ii As Integer
+
+        For i As Integer = numbs.Count - 1 To 0 Step -1
+            x = Math.Floor(r.NextDouble() * (i + 1)) 'r.Next(0, i)
+            ii = numbs(x).num
+            numbs(x).setNum(numbs(i).num)
+            numbs(i).setNum(ii)
+        Next i
+        Return numbs
+
+    End Function
+
     Public Function Shuffle(data)
 
         Dim x, swap As Integer
@@ -1111,6 +1176,7 @@ Public Class Form1
             detectingOnChange = True
             btnDisableOnChange.Text = "Allow entry..."
         End If
+        txtWord.Focus()
     End Sub
 
 
