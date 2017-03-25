@@ -4,7 +4,7 @@ Imports System.IO
 
 
 Public Class Form1
-
+    Public strPuzzleType As String
     Public outputFileName As String = "C:\Users\Diane\AndroidStudioProjects\Fragmental\puzzle_data.txt"
     Public strPuzzleData As String = ""
     Public arrOfFragCombos = {{({2, 2}), ({2, 2}), ({2, 2}), ({2, 2}), ({2, 2}), ({2, 2})}, {({2, 3}), ({2, 3}), ({2, 3}), ({2, 3}), ({2, 3}), ({2, 3})}, {({2, 2, 2}), ({3, 3}), ({2, 2, 2}), ({2, 2, 2}), ({3, 3}), ({3, 3})}, {({2, 2, 3}), ({2, 2, 3}), ({2, 2, 3}), ({2, 2, 3}), ({2, 2, 3}), ({2, 2, 3})}, {({2, 2, 2, 2}), ({2, 3, 3}), ({2, 2, 4}), ({2, 2, 4}), ({2, 2, 2, 2}), ({2, 3, 3})}, {({2, 2, 2, 3}), ({2, 3, 4}), ({3, 3, 3}), ({2, 2, 2, 3}), ({2, 3, 4}), ({3, 3, 3})}, {({2, 2, 2, 2, 2}), ({2, 2, 3, 3}), ({2, 2, 2, 4}), ({2, 2, 2, 4}), ({2, 2, 3, 3}), ({2, 2, 3, 3})}, {({2, 2, 2, 2, 3}), ({2, 2, 3, 4}), ({2, 3, 3, 3}), ({2, 2, 3, 4}), ({2, 3, 3, 3}), ({2, 3, 3, 3})}, {({2, 2, 2, 3, 3}), ({2, 3, 3, 4}), ({2, 2, 4, 4}), ({3, 3, 3, 3}), ({3, 3, 3, 3}), ({2, 3, 3, 4})}}
@@ -929,7 +929,7 @@ Public Class Form1
 
     Private Sub btnPuzzStrArray_Click(sender As Object, e As EventArgs) Handles btnPuzzStrArray.Click
         Dim puzzleString As String = ""
-        Dim filePath As String = "C:\Users\Diane\AndroidStudioProjects\Fragmental\puzzleStrings.txt"
+        Dim filePath As String = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\puzzles.txt"
         Dim allPuzzles As New List(Of PuzzString)
 
         Try
@@ -965,8 +965,8 @@ Public Class Form1
 
     Private Sub btnFragmentate_Click(sender As Object, e As EventArgs) Handles btnFragmentate.Click
         Dim puzzleString As String = ""
-        Dim filePath As String = "C:\Users\Diane\AndroidStudioProjects\Fragmental\_" + txtFragment.Text + ".txt"
-        Dim filePathout As String = "C:\Users\Diane\AndroidStudioProjects\Fragmental\work_file.txt"
+        Dim filePath As String = "D:\FragMental Puzzles\puzzleStrings\" + txtFragment.Text + ".txt"
+        Dim filePathout As String = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\puzzles.txt"
         Dim allLines As String()
         Dim allWords As String()
         Dim allClues As String()
@@ -1174,16 +1174,15 @@ Public Class Form1
         puzzString = puzzString.Replace("'", "\'")
         puzzString = "'" + puzzString + "'"
 
-
         Try
             Dim sw As StreamWriter = File.AppendText(filePathout)
             sw.WriteLine(puzzString)
             sw.Close()
+
+            lblNumPuzzles.Text = Convert.ToString(Convert.ToInt32(lblNumPuzzles.Text) + 1)
         Catch ex As Exception
             MsgBox(ex)
         End Try
-
-
 
     End Sub
 
@@ -1552,14 +1551,27 @@ Public Class Form1
 
 
     Private Sub btnEnter_Click(sender As Object, e As EventArgs) Handles btnEnter.Click
-        Dim outPath As String = "C:\Users\Diane\AndroidStudioProjects\FragMental\_art.txt"
+        If txtFragment.Text.Length < 1 Then
+            MsgBox("Please enter letters in the Fragment box")
+            Return
+        End If
+        'Dim outPath As String = "C\Users\Diane\AndroidStudioProjects\FragMental\_" + txtFragment.Text + ".txt"
+        Dim outPath As String = "D:\FragMental Puzzles\puzzleStrings\" + txtFragment.Text + ".txt"
+
+        If Not System.IO.File.Exists(outPath) Then
+            System.IO.File.Create(outPath).Dispose()
+        End If
+
         Try
             Dim sw As StreamWriter = File.AppendText(outPath)
             Dim outString As String = txtWord.Text.ToLower.Trim + "|" + txtClue.Text.Trim
             sw.WriteLine(outString)
             sw.Close()
         Catch ex As Exception
+            MsgBox(ex.ToString)
         End Try
+
+        lblCount.Text = Convert.ToString(Convert.ToInt32(lblCount.Text) + txtWord.Text.Length)
         onWord = True
         txtWord.Text = ""
         txtClue.Text = ""
@@ -1605,10 +1617,36 @@ Public Class Form1
         txtWord.Focus()
     End Sub
 
+    Private Sub rbnEasy_CheckedChanged(sender As Object, e As EventArgs) Handles rbnEasy.CheckedChanged
+        If rbnEasy.Checked = True Then
+            strPuzzleType = "Easy"
+        End If
+    End Sub
 
+    Private Sub rbnMedium_CheckedChanged(sender As Object, e As EventArgs) Handles rbnMedium.CheckedChanged
+        If rbnMedium.Checked = True Then
+            strPuzzleType = "Medium"
+        End If
 
+    End Sub
 
+    Private Sub rbnHard_CheckedChanged(sender As Object, e As EventArgs) Handles rbnHard.CheckedChanged
+        If rbnHard.Checked = True Then
+            strPuzzleType = "Hard"
+        End If
 
+    End Sub
+
+    Private Sub rbnTheme_CheckedChanged(sender As Object, e As EventArgs) Handles rbnTheme.CheckedChanged
+        If rbnTheme.Checked = True Then
+            strPuzzleType = "Theme"
+        End If
+
+    End Sub
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles Me.Load
+        strPuzzleType = "Easy"
+    End Sub
 
 
 
