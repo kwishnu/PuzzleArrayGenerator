@@ -4,9 +4,9 @@ Imports System.IO
 
 
 Public Class Form1
-    Public strPuzzleType As String = "Medium"
+    Public strPuzzleType As String = ""
     Public clipboardContents As String = ""
-    Public strClipboard As String = ""
+    Public strClipboard As String = "Theme"
     Public started As Boolean = False
     Public onWord As Boolean = True
     Public detectingOnChange As Boolean = True
@@ -23,17 +23,29 @@ Public Class Form1
 
     'Make string for insertion into mongo database (insertMany)
     Private Sub btnMakeDatabaseString_Click(sender As Object, e As EventArgs) Handles btnMakeDatabaseString.Click
-        If txtPackName.Text.Length < 1 Then
+        If txtPackName.Text.Length < 1 And Not strPuzzleType = "Daily" Then
             MsgBox("Please enter the Pack's name")
             Return
         End If
-
+        If txtDailyNum.Text.Length < 1 And strPuzzleType = "Daily" Then
+            MsgBox("Enter The Daily counter number")
+            Return
+        End If
 
         Dim puzzleString As String = ""
-        Dim filePath As String = "D:\FragMental Puzzles\puzzles\" + txtPackName.Text + "\puzzles.txt"
+        Dim filePath As String = ""
+        If strPuzzleType = "Daily" Then
+            filePath = "D:\FragMental Puzzles\puzzles\" + strPuzzleType + "\" + txtMonth.Text + "_" + txtDay.Text + "_" + txtYear.Text + "\puzzles.txt"
+        Else
+            filePath = "D:\FragMental Puzzles\puzzles\" + strPuzzleType + "\" + txtPackName.Text + "\puzzles.txt"
+        End If
+
         Dim allPuzzles As New List(Of PuzzString)
         Dim c As Integer = 0
-
+        Dim dailyNum As Integer = 0
+        If txtDailyNum.Text.Length > 0 Then
+            dailyNum = CType(txtDailyNum.Text, Integer)
+        End If
         Try
             Dim sr As StreamReader = New StreamReader(filePath)
             Do While sr.Peek() >= 0
@@ -45,26 +57,36 @@ Public Class Form1
             Console.WriteLine("The file could not be read:   ")
             Console.WriteLine(err.Message)
         End Try
-
-        Dim outPath As String = "D:\FragMental Puzzles\mongoStrings\" + txtPackName.Text + "_insertString.txt"
+        Dim outPath As String = ""
+        Dim whichDB As String = ""
+        If strPuzzleType = "Daily" Then
+            outPath = "D:\FragMental Puzzles\mongoStrings\" + strPuzzleType + "\" + txtMonth.Text + "_" + txtDay.Text + "_" + txtYear.Text + "_insertString.txt"
+            whichDB = "dataD"
+        Else
+            outPath = "D:\FragMental Puzzles\mongoStrings\" + strPuzzleType + "\" + txtPackName.Text + "_insertString.txt"
+            whichDB = "dataP"
+        End If
         If Not File.Exists(outPath) Then
             File.Create(outPath).Dispose()
         End If
 
         Try
             Dim sw As StreamWriter = File.CreateText(outPath)
-            sw.WriteLine("db.dataP.insertMany([")
+            sw.WriteLine("db." + whichDB + ".insertMany([")
             For Each puzzle In allPuzzles
-                c = c + 1
                 sw.WriteLine("	{")
-                'sw.WriteLine("  pnum:" + Convert.ToString(c))
-                sw.WriteLine("  pack:""" + txtPackName.Text.Trim() + """,")
-                sw.WriteLine("  puzz:" + puzzle.strPuzzle)
-                If c = CType(txtNumPuzzles.Text, Integer) Then
-                    sw.WriteLine("	}")
+                If strPuzzleType = "Daily" Then
+                    sw.WriteLine("  pnum:" + Convert.ToString(c + dailyNum) + ",")
                 Else
-                    sw.WriteLine("	},")
+                    sw.WriteLine("  pack:""" + txtPackName.Text.Trim() + """,")
                 End If
+                sw.WriteLine("  puzz:" + puzzle.strPuzzle)
+                c += 1
+                'If c = CType(txtNumPuzzles.Text, Integer) Then
+                '    sw.WriteLine("	}")
+                'Else
+                sw.WriteLine("	},")
+                'End If
             Next
             sw.WriteLine("])")
             sw.Close()
@@ -73,6 +95,10 @@ Public Class Form1
         End Try
     End Sub
     Private Sub btnPuzzStrArray_Click(sender As Object, e As EventArgs) Handles btnPuzzStrArray.Click
+        If strPuzzleType.Length < 1 Then
+            MsgBox("Select a Puzzle Type first...")
+            Return
+        End If
         Dim puzzleString As String = ""
         Dim filePath As String = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\puzzles.txt"
         Dim allPuzzles As New List(Of PuzzString)
@@ -109,17 +135,23 @@ Public Class Form1
         End Try
     End Sub
 
-
-
     Private Sub btnMakePuzzlePack_Click(sender As Object, e As EventArgs) Handles btnMakePuzzlePack.Click
-        If txtPackName.Text.Length < 1 Then
+        If Not strPuzzleType = "Daily" And txtPackName.Text.Length < 1 Then
             MsgBox("Please enter the Pack's name")
+            Return
+        End If
+        If strPuzzleType.Length < 1 Then
+            MsgBox("Please select a Puzzle type")
+            Return
+        End If
+        If strPuzzleType = "Daily" And txtDay.Text.Length < 1 Then
+            MsgBox("Enter the date for folder name")
             Return
         End If
         Dim allPuzzles As New List(Of String)
         Dim randomizedPuzzles As New List(Of String)
-        Dim directoryPath As String = "D:\FragMental Puzzles\material\workingFiles\" + txtPackName.Text + "\"
-        Dim directoryPathout As String = "D:\FragMental Puzzles\puzzles\" + txtPackName.Text + "\"
+        Dim directoryPath As String = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType
+        Dim directoryPathout As String = If(strPuzzleType = "Daily", "D:\FragMental Puzzles\puzzles\" + strPuzzleType + "\" + txtMonth.Text + "_" + txtDay.Text + "_" + txtYear.Text + "\", "D:\FragMental Puzzles\puzzles\" + strPuzzleType + "\" + txtPackName.Text + "\")
         Dim filePathout As String = directoryPathout + "puzzles.txt"
 
         If (Not Directory.Exists(directoryPathout)) Then
@@ -138,7 +170,8 @@ Public Class Form1
         Dim strPuzzle As String = ""
         For Each fileinfo In fi
             fullPath = fileinfo.DirectoryName + "\" + fileinfo.Name
-            frag = fileinfo.Name.Substring(0, fileinfo.Name.Length - 4)
+            frag = fileinfo.Name.Substring(0, fileinfo.Name.Length - 6)
+
             strPuzzle = makePuzzleString(fullPath, frag)
             allPuzzles.Add(New String(strPuzzle))
         Next fileinfo
@@ -154,12 +187,24 @@ Public Class Form1
             MsgBox(ex)
         End Try
 
-
+        Dim directoryForUsed As String = "D:\FragMental Puzzles\puzzleStrings\Archive\" + strPuzzleType + "\" + txtPackName.Text + "\"
+        If (Not Directory.Exists(directoryForUsed)) Then
+            Directory.CreateDirectory(directoryForUsed)
+        End If
+        For Each fileinfo In fi
+            fullPath = fileinfo.DirectoryName + "\" + fileinfo.Name
+            My.Computer.FileSystem.CopyFile(fullPath, directoryForUsed + fileinfo.Name)
+        Next fileinfo
     End Sub
 
 
     'Make puzzle string from file bearing txtFragment.Text's name
     Private Sub btnFragmentate_Click(sender As Object, e As EventArgs) Handles btnFragmentate.Click
+        If strPuzzleType.Length < 1 Then
+            MsgBox("Select a Puzzle Type first...")
+            Return
+        End If
+
         Dim filePath As String = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\" + txtFragment.Text + ".txt"
         Dim filePathout As String = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\puzzles.txt"
         Dim PuzzString As String = makePuzzleString(filePath, txtFragment.Text)
@@ -218,6 +263,7 @@ Public Class Form1
         Dim Rand As New Random()
         Dim num As Integer = 0
         Dim loopCount As Integer = 0
+        Console.WriteLine(keyFrag)
 
         Do
             totalNumFrags = 0
@@ -226,159 +272,180 @@ Public Class Form1
                     position(j) = 0
                 ElseIf (allWords(j).IndexOf("^") = allWords(j).Length - 1) Then 'at end of word:
                     position(j) = 1
+                ElseIf (allWords(j).IndexOf("^") < 0) Then 'not in word:
+                    position(j) = -1
                 Else 'somewhere in the middle of the word:
                     position(j) = 2
                 End If
             Next
-            Console.WriteLine("starting...")
 
             For m As Integer = 0 To arrayLength
                 Dim r As Integer = 0
                 Dim s As Integer = 0
+                Select Case position(m)
+                    Case 2
+                        Select Case allWords(m).IndexOf("^")
+                            Case 2
+                                numFrags(m, 0) = 1
+                                totalNumFrags += 1
+                                Select Case allWords(m).Length
+                                    Case 5, 6
+                                        numFrags(m, 1) = 1
+                                        totalNumFrags = totalNumFrags + 1
+                                    Case 7
+                                        r = Rand.Next(1, 3)
+                                        numFrags(m, 1) = r
+                                        totalNumFrags = totalNumFrags + r
+                                    Case 8
+                                        numFrags(m, 1) = 2
+                                        totalNumFrags = totalNumFrags + 2
+                                    Case 9, 10
+                                        r = Rand.Next(2, 4)
+                                        numFrags(m, 1) = r
+                                        totalNumFrags = totalNumFrags + r
+                                    Case 11
+                                        r = Rand.Next(2, 5)
+                                        numFrags(m, 1) = r
+                                        totalNumFrags = totalNumFrags + r
+                                End Select
+                            Case 3
+                                numFrags(m, 0) = 1
+                                totalNumFrags += 1
+                                Select Case allWords(m).Length
+                                    Case 6, 7
+                                        numFrags(m, 1) = 1
+                                        totalNumFrags = totalNumFrags + 1
+                                    Case 8
+                                        r = Rand.Next(1, 3)
+                                        numFrags(m, 1) = r
+                                        totalNumFrags = totalNumFrags + r
+                                    Case 9
+                                        numFrags(m, 1) = 2
+                                        totalNumFrags = totalNumFrags + 2
+                                    Case 10, 11
+                                        r = Rand.Next(2, 4)
+                                        numFrags(m, 1) = r
+                                        totalNumFrags = totalNumFrags + r
+                                End Select
+                            Case 4
+                                Select Case allWords(m).Length
+                                    Case 7, 8
+                                        numFrags(m, 1) = 1
+                                        r = Rand.Next(1, 3)
+                                        numFrags(m, 0) = r
+                                        totalNumFrags = totalNumFrags + r + 1
+                                    Case 9
+                                        r = Rand.Next(1, 3)
+                                        s = Rand.Next(1, 3)
+                                        numFrags(m, 0) = r
+                                        numFrags(m, 1) = s
+                                        totalNumFrags = totalNumFrags + r + s
+                                    Case 10
+                                        r = Rand.Next(1, 3)
+                                        numFrags(m, 0) = r
+                                        numFrags(m, 1) = 2
+                                        totalNumFrags = totalNumFrags + r + 2
+                                    Case 11
+                                        r = Rand.Next(1, 3)
+                                        s = Rand.Next(2, 4)
+                                        numFrags(m, 0) = r
+                                        numFrags(m, 1) = s
+                                        totalNumFrags = totalNumFrags + r + s
+                                End Select
+                            Case 5
+                                Select Case allWords(m).Length
+                                    Case 8, 9
+                                        numFrags(m, 1) = 1
+                                        numFrags(m, 0) = 2
+                                        totalNumFrags = totalNumFrags + 3
+                                    Case 10
+                                        r = Rand.Next(1, 3)
+                                        numFrags(m, 0) = 2
+                                        numFrags(m, 1) = r
+                                        totalNumFrags = totalNumFrags + r + 2
+                                    Case 11
+                                        numFrags(m, 0) = 2
+                                        numFrags(m, 1) = 2
+                                        totalNumFrags = totalNumFrags + 4
+                                End Select
+                            Case 6
+                                Select Case allWords(m).Length
+                                    Case 9, 10
+                                        numFrags(m, 1) = 1
+                                        r = Rand.Next(2, 4)
+                                        numFrags(m, 0) = r
+                                        totalNumFrags = totalNumFrags + r + 1
+                                    Case 11
+                                        r = Rand.Next(2, 4)
+                                        s = Rand.Next(1, 3)
+                                        numFrags(m, 0) = r
+                                        numFrags(m, 1) = s
+                                        totalNumFrags = totalNumFrags + r + s
+                                End Select
+                            Case 7
+                                Select Case allWords(m).Length
+                                    Case 10, 11
+                                        numFrags(m, 1) = 1
+                                        r = Rand.Next(2, 4)
+                                        numFrags(m, 0) = r
+                                        totalNumFrags = totalNumFrags + r + 1
+                                End Select
 
-                If position(m) = 2 Then
-                    Select Case allWords(m).IndexOf("^")
-                        Case 2
-                            numFrags(m, 0) = 1
-                            totalNumFrags += 1
-                            Select Case allWords(m).Length
-                                Case 5, 6
-                                    numFrags(m, 1) = 1
-                                    totalNumFrags = totalNumFrags + 1
-                                Case 7
-                                    r = Rand.Next(1, 3)
-                                    numFrags(m, 1) = r
-                                    totalNumFrags = totalNumFrags + r
-                                Case 8
-                                    numFrags(m, 1) = 2
-                                    totalNumFrags = totalNumFrags + 2
-                                Case 9, 10
-                                    r = Rand.Next(2, 4)
-                                    numFrags(m, 1) = r
-                                    totalNumFrags = totalNumFrags + r
-                                Case 11
-                                    r = Rand.Next(2, 5)
-                                    numFrags(m, 1) = r
-                                    totalNumFrags = totalNumFrags + r
-                            End Select
-                        Case 3
-                            numFrags(m, 0) = 1
-                            totalNumFrags += 1
-                            Select Case allWords(m).Length
-                                Case 6, 7
-                                    numFrags(m, 1) = 1
-                                    totalNumFrags = totalNumFrags + 1
-                                Case 8
-                                    r = Rand.Next(1, 3)
-                                    numFrags(m, 1) = r
-                                    totalNumFrags = totalNumFrags + r
-                                Case 9
-                                    numFrags(m, 1) = 2
-                                    totalNumFrags = totalNumFrags + 2
-                                Case 10, 11
-                                    r = Rand.Next(2, 4)
-                                    numFrags(m, 1) = r
-                                    totalNumFrags = totalNumFrags + r
-                            End Select
-                        Case 4
-                            Select Case allWords(m).Length
-                                Case 7, 8
-                                    numFrags(m, 1) = 1
-                                    r = Rand.Next(1, 3)
-                                    numFrags(m, 0) = r
-                                    totalNumFrags = totalNumFrags + r + 1
-                                Case 9, 10
-                                    r = Rand.Next(1, 3)
-                                    s = Rand.Next(1, 3)
-                                    numFrags(m, 0) = r
-                                    numFrags(m, 1) = s
-                                    totalNumFrags = totalNumFrags + r + s
-                                Case 11
-                                    r = Rand.Next(1, 3)
-                                    s = Rand.Next(2, 4)
-                                    numFrags(m, 0) = r
-                                    numFrags(m, 1) = s
-                                    totalNumFrags = totalNumFrags + r + s
-                            End Select
-                        Case 5
-                            Select Case allWords(m).Length
-                                Case 8, 9
-                                    numFrags(m, 1) = 1
-                                    numFrags(m, 0) = 2
-                                    totalNumFrags = totalNumFrags + 3
-                                Case 10
-                                    r = Rand.Next(1, 3)
-                                    numFrags(m, 0) = 2
-                                    numFrags(m, 1) = r
-                                    totalNumFrags = totalNumFrags + r + 2
-                                Case 11
-                                    numFrags(m, 0) = 2
-                                    numFrags(m, 1) = 2
-                                    totalNumFrags = totalNumFrags + 4
-                            End Select
-                        Case 6
-                            Select Case allWords(m).Length
-                                Case 9, 10
-                                    numFrags(m, 1) = 1
-                                    r = Rand.Next(2, 4)
-                                    numFrags(m, 0) = r
-                                    totalNumFrags = totalNumFrags + r + 1
-                                Case 11
-                                    r = Rand.Next(2, 4)
-                                    s = Rand.Next(1, 3)
-                                    numFrags(m, 0) = r
-                                    numFrags(m, 1) = s
-                                    totalNumFrags = totalNumFrags + r + s
-                            End Select
-                        Case 7
-                            Select Case allWords(m).Length
-                                Case 10, 11
-                                    numFrags(m, 1) = 1
-                                    r = Rand.Next(2, 4)
-                                    numFrags(m, 0) = r
-                                    totalNumFrags = totalNumFrags + r + 1
-                            End Select
-
-                        Case 8
-                            Select Case allWords(m).Length
-                                Case 10, 11
-                                    numFrags(m, 1) = 1
-                                    r = Rand.Next(2, 5)
-                                    numFrags(m, 0) = r
-                                    totalNumFrags = totalNumFrags + r + 1
-                            End Select
-                    End Select
-
-                Else
-                    Select Case allWords(m).Length
-                        Case 3, 4
-                            num = 1
-                        Case 5
-                            num = Rand.Next(1, 3)
-                        Case 6
-                            num = 2
-                        Case 7, 8
-                            num = Rand.Next(2, 4)
-                        Case 9
-                            num = Rand.Next(2, 5)
-                        Case 10
-                            num = Rand.Next(3, 5)
-                        Case 11
-                            num = Rand.Next(3, 6)
-                    End Select
-                    Console.WriteLine(num)
-
-                    totalNumFrags = totalNumFrags + num
-                    If position(m) = 0 Then
-                        numFrags(m, 0) = 0
-                        numFrags(m, 1) = num
-                    Else
+                            Case 8
+                                Select Case allWords(m).Length
+                                    Case 10, 11
+                                        numFrags(m, 1) = 1
+                                        r = Rand.Next(2, 5)
+                                        numFrags(m, 0) = r
+                                        totalNumFrags = totalNumFrags + r + 1
+                                End Select
+                        End Select
+                    Case 1, 0
+                        Select Case allWords(m).Length
+                            Case 3, 4
+                                num = 1
+                            Case 5
+                                num = Rand.Next(1, 3)
+                            Case 6
+                                num = 2
+                            Case 7, 8
+                                num = Rand.Next(2, 4)
+                            Case 9
+                                num = Rand.Next(2, 5)
+                            Case 10
+                                num = Rand.Next(3, 5)
+                            Case 11
+                                num = Rand.Next(3, 6)
+                        End Select
+                        totalNumFrags = totalNumFrags + num
+                        If position(m) = 0 Then
+                            numFrags(m, 0) = 0
+                            numFrags(m, 1) = num
+                        Else
+                            numFrags(m, 1) = 0
+                            numFrags(m, 0) = num
+                        End If
+                    Case -1
+                        Select Case allWords(m).Length
+                            Case 4, 5
+                                num = 2
+                            Case 6, 7
+                                num = Rand.Next(2, 4)
+                            Case 8
+                                num = Rand.Next(2, 5)
+                            Case 9
+                                num = Rand.Next(3, 5)
+                            Case 10, 11
+                                num = Rand.Next(3, 6)
+                            Case 12
+                                num = Rand.Next(3, 7)
+                        End Select
+                        totalNumFrags = totalNumFrags + num
                         numFrags(m, 1) = 0
                         numFrags(m, 0) = num
-                    End If
-                End If
+                End Select
                 If loopCount = 199 Then
-                    MsgBox("Timed Out" + allWords(m))
+                    MsgBox("Timed Out" + " " + keyFrag + " " + allWords(m))
                     Exit Function
                 End If
             Next
@@ -389,20 +456,21 @@ Public Class Form1
 
         Dim delimWords(0 To arrayLength) As String
         For n As Integer = 0 To arrayLength
-            Dim skipToNextOccurence As Boolean = If(allWords(n).IndexOf("^") = 1, True, False)
-
             Dim strLeftSide = ""
             If position(n) = 0 Then
                 delimWords(n) = "^" + fragmentateString(allWords(n).Substring(1), numFrags(n, 1)) + ":" + allClues(n)
             ElseIf position(n) = 1 Then
                 Dim strBack As String = fragmentateString(allWords(n).Substring(0, allWords(n).Length - 1), numFrags(n, 0))
                 delimWords(n) = strBack.Substring(1) + "|^:" + allClues(n)
-            Else
+            ElseIf position(n) = 2 Then
                 Dim firstHalf As String = ""
                 Dim secondHalf As String = ""
                 firstHalf = fragmentateString(allWords(n).Substring(0, allWords(n).IndexOf("^")), numFrags(n, 0))
                 secondHalf = fragmentateString(allWords(n).Substring(allWords(n).IndexOf("^") + 1), numFrags(n, 1))
                 delimWords(n) = firstHalf.Substring(1) + "|^" + secondHalf + ":" + allClues(n)
+            Else
+                Dim str As String = fragmentateString(allWords(n), numFrags(n, 0))
+                delimWords(n) = str.Substring(1) + ":" + allClues(n)
             End If
         Next
         Dim puzzString As String = keyFrag + "~" + Join(delimWords, "**")
@@ -412,8 +480,6 @@ Public Class Form1
         Return puzzString
 
     End Function
-
-
 
     Public Function fragmentateString(str As String, n As Integer)
         'Break str into n fragments...
@@ -487,8 +553,18 @@ Public Class Form1
                     Case 5
                         strToReturn = breakInFive(str)
                 End Select
+            Case 12
+                Select Case n
+                    Case 3
+                        strToReturn = "|" + str.Substring(0, 4) + "|" + str.Substring(4, 4) + "|" + str.Substring(8, 4)
+                    Case 4
+                        strToReturn = breakInFour(str)
+                    Case 5
+                        strToReturn = breakInFive(str)
+                    Case 6
+                        strToReturn = "|" + str.Substring(0, 2) + "|" + str.Substring(2, 2) + "|" + str.Substring(4, 2) + "|" + str.Substring(6, 2) + "|" + str.Substring(8, 2) + "|" + str.Substring(10)
+                End Select
         End Select
-
         Return strToReturn
     End Function
     Public Function breakInTwo(strSent As String)
@@ -522,7 +598,6 @@ Public Class Form1
             Case 8
                 strToReturn = "|" + strSent.Substring(0, 4) + "|" + strSent.Substring(4)
         End Select
-
         Return strToReturn
     End Function
     Public Function breakInThree(strSent As String)
@@ -572,8 +647,17 @@ Public Class Form1
                     Case 3
                         strToReturn = "|" + strSent.Substring(0, 4) + breakInTwo(strSent.Substring(4))
                 End Select
+            Case 11
+                x = rnd.Next(1, 3)
+                Select Case x
+                    Case 1
+                        strToReturn = "|" + strSent.Substring(0, 3) + breakInTwo(strSent.Substring(3))
+                    Case 2
+                        strToReturn = "|" + strSent.Substring(0, 4) + breakInTwo(strSent.Substring(4))
+                End Select
+            Case 12
+                strToReturn = "|" + strSent.Substring(0, 4) + breakInTwo(strSent.Substring(4))
         End Select
-
         Return strToReturn
     End Function
     Public Function breakInFour(strSent As String)
@@ -591,7 +675,7 @@ Public Class Form1
                     Case 2
                         strToReturn = "|" + strSent.Substring(0, 3) + breakInThree(strSent.Substring(3))
                 End Select
-            Case 10
+            Case 10, 11, 12
                 x = rnd.Next(1, 4)
                 Select Case x
                     Case 1
@@ -602,7 +686,6 @@ Public Class Form1
                         strToReturn = "|" + strSent.Substring(0, 4) + breakInThree(strSent.Substring(4))
                 End Select
         End Select
-
         Return strToReturn
     End Function
     Public Function breakInFive(strSent As String)
@@ -612,6 +695,8 @@ Public Class Form1
     End Function
 
     Private Sub Timer1_Tick(sender As Object, e As EventArgs) Handles Timer1.Tick
+        Me.TopMost = True
+
         strClipboard = Clipboard.GetText()
         If (started = True) Then
             If Not (String.Equals(strClipboard, clipboardContents)) Then
@@ -634,6 +719,8 @@ Public Class Form1
             started = True
         End If
     End Sub
+
+    Dim strFileName As String = ""
     Private Sub btnEnter_Click(sender As Object, e As EventArgs) Handles btnEnter.Click
         If txtFragment.Text.Length < 1 Then
             MsgBox("Please enter letters in the Fragment box")
@@ -643,21 +730,31 @@ Public Class Form1
             MsgBox("That word is more than 12 letters")
             Return
         End If
-
-        Dim outPath As String = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\" + txtFragment.Text + ".txt"
-
-        If Not File.Exists(outPath) Then
-            File.Create(outPath).Dispose()
+        If strPuzzleType.Length < 1 Then
+            MsgBox("Select a Puzzle Type first...")
+            Return
         End If
+        'Dim outPath As String = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\" + txtFragment.Text + "_0.txt"
+        'Dim increment As Integer = 0
+        'While File.Exists(outPath) And newCombo
+        '    increment += 1
+        '    Dim strIncrement As String = CType(increment, String)
+        '    outPath = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\" + txtFragment.Text + "_" + strIncrement + ".txt"
+        'End While
+        'If Not File.Exists(outPath) Then
+        '    File.Create(outPath).Dispose()
+        'End If
 
         Try
-            Dim sw As StreamWriter = File.AppendText(outPath)
+            Dim sw As StreamWriter = File.AppendText(strFileName)
             Dim outString As String = txtWord.Text.ToLower.Trim + "|" + txtClue.Text.Trim
             sw.WriteLine(outString)
             sw.Close()
         Catch ex As Exception
             MsgBox(ex.ToString)
         End Try
+
+        determineHighLowCount(txtWord.Text, txtFragment.Text)
 
         lblCount.Text = Convert.ToString(Convert.ToInt32(lblCount.Text) + txtWord.Text.Length - txtFragment.Text.Length)
         onWord = True
@@ -722,6 +819,12 @@ Public Class Form1
         End If
 
     End Sub
+    Private Sub rbnDaily_CheckedChanged(sender As Object, e As EventArgs) Handles rbnDaily.CheckedChanged
+        If rbnDaily.Checked = True Then
+            strPuzzleType = "Daily"
+        End If
+
+    End Sub
     Private Sub lblCount_Click(sender As Object, e As EventArgs) Handles lblCount.Click
         lblCount.Text = "0"
     End Sub
@@ -731,16 +834,11 @@ Public Class Form1
     Private Sub lblNumPuzzles_DoubleClick(sender As Object, e As EventArgs) Handles lblNumPuzzles.DoubleClick
         lblNumPuzzles.Text = "0"
     End Sub
-
-
-
-
     'Remove duplicates from list of words, confine lengths to 4=>12 characters, add pipe:
-
     Private Sub btnRemoveDups_Click(sender As Object, e As EventArgs) Handles btnRemoveDups.Click
         Dim puzzleString As String = ""
         Dim filePath As String = "D:\FragMental Puzzles\material\wordlist.txt"
-        Dim filePathout As String = "D:\FragMental Puzzles\material\_wordlist.txt"
+        Dim filePathout As String = "D:\FragMental Puzzles\material\wordlist2.txt"
         Dim rightLength As New List(Of String)
         Dim allLines As New List(Of String)
 
@@ -749,10 +847,11 @@ Public Class Form1
             Do While sr.Peek() >= 0
                 puzzleString = sr.ReadLine()
                 puzzleString = puzzleString.Trim
-                puzzleString = puzzleString.Replace("'s", "s")
+                'puzzleString = puzzleString.Replace("'s", "s")
+                If puzzleString.IndexOf("sss") < 0 Then
 
-                If puzzleString.Length > 3 And puzzleString.Length < 13 And puzzleString.IndexOf("'") < 0 Then
-                    puzzleString = puzzleString.ToLower
+                    'If puzzleString.Length > 3 And puzzleString.Length < 13 And puzzleString.IndexOf("'") < 0 Then
+                    'puzzleString = puzzleString.ToLower
 
                     'If String.IsNullOrEmpty(splitToCheck(1)) Then
                     '    splitToCheck(1) = "***"
@@ -775,13 +874,13 @@ Public Class Form1
             Console.WriteLine(err.Message)
         End Try
 
-        For Each word In rightLength
-            If (String.Equals(puzzleString.Substring(1, 1).ToUpper, puzzleString.Substring(1, 1)) = False) Then
-                allLines.Add(New String(word))
-            End If
-        Next
+        'For Each word In rightLength
+        '    If (String.Equals(puzzleString.Substring(1, 1).ToUpper, puzzleString.Substring(1, 1)) = False) Then
+        '        allLines.Add(New String(word))
+        '    End If
+        'Next
 
-        Dim noDupList As List(Of String) = removeDuplicates(allLines)
+        'Dim noDupList As List(Of String) = removeDuplicates(allLines)
         If Not File.Exists(filePathout) Then
             File.Create(filePathout).Dispose()
         End If
@@ -789,7 +888,7 @@ Public Class Form1
         Try
             Dim sw As StreamWriter = File.CreateText(filePathout)
 
-            For Each line In allLines
+            For Each line In rightLength 'allLines
                 sw.WriteLine(line)
             Next
             sw.Close()
@@ -797,8 +896,6 @@ Public Class Form1
             MsgBox(ex)
         End Try
     End Sub
-
-
     Private Sub btnCreatePuzzleFiles_Click(sender As Object, e As EventArgs) Handles btnCreatePuzzleFiles.Click
         Dim letterCombos() As String = {"al", "an", "ar", "as", "at", "ea", "en", "es", "ha", "he", "hi", "in", "is", "it", "le", "me", "nd", "ne", "nt", "on", "or", "ou", "re", "se", "st", "te", "th", "ti", "to", "ve", "wa", "and", "are", "but", "era", "ere", "eve", "for", "had", "hat", "hen", "her", "hin", "his", "ith", "not", "ome", "sho", "ted", "ter", "tha", "the", "thi", "ver"}
         Dim usedCombos(50) As String
@@ -867,15 +964,10 @@ Public Class Form1
             'RandomizeFile(filePath)
         Loop Until onThisPuzzle = 50
     End Sub
-
-
-
     Public Function RandomizeFile(path)
-
         Dim puzzleString As String = ""
         Dim filePath As String = path
         Dim filePathout As String = "D:\FragMental Puzzles\material\wordlist.txt"
-
         Dim allLines As New List(Of PuzzString)
 
         Try
@@ -904,7 +996,6 @@ Public Class Form1
 
 
     End Function
-
     Function Shuffle(Of T)(collection As IEnumerable(Of T)) As List(Of T)
         Dim r As Random = New Random()
         Shuffle = collection.OrderBy(Function(a) r.Next()).ToList()
@@ -925,7 +1016,6 @@ Public Class Form1
         Return datalist
 
     End Function
-
     Private Shared Function removeDuplicates(inputList As List(Of String)) As List(Of String)
         Dim uniqueStore As New Dictionary(Of String, Integer)()
         Dim finalList As New List(Of String)()
@@ -937,10 +1027,217 @@ Public Class Form1
         Next
         Return finalList
     End Function
-
     Private Sub btnRandomize_Click(sender As Object, e As EventArgs) Handles btnRandomize.Click
         RandomizeFile("D:\FragMental Puzzles\material\_wordlist.txt")
     End Sub
+    Private Sub btnNext_Click(sender As Object, e As EventArgs) Handles btnNext.Click
+        'Dim outPath As String = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\" + txtFragment.Text + ".txt"
+        'If File.Exists(outPath) Then
+        '    MsgBox("You already have a file with that name")
+        '    Return
+        'End If
+        strFileName = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\" + txtFragment.Text + "_0.txt"
+        Dim increment As Integer = 0
+        While File.Exists(strFileName)
+            increment += 1
+            Dim strIncrement As String = CType(increment, String)
+            strFileName = "D:\FragMental Puzzles\puzzleStrings\" + strPuzzleType + "\" + txtFragment.Text + "_" + strIncrement + ".txt"
+        End While
+        If Not File.Exists(strFileName) Then
+            File.Create(strFileName).Dispose()
+        End If
+
+        lblMax.Text = "0"
+        lblMin.Text = "0"
+    End Sub
+    Public Function determineHighLowCount(theWord, theFrag)
+        theWord = Replace(theWord, theFrag, "^",, 1)
+        Dim totalNumFrags As Integer = 0
+        Dim Rand As New Random()
+        Dim num As Integer = 0
+        Dim loopCount As Integer = 0
+        Dim position As Integer
+        Dim numFrags(0, 0 To 1) As Integer
+        Dim lowEnd As Integer = 100
+        Dim highEnd As Integer = 0
+
+        Do
+            totalNumFrags = 0
+            If (theWord.IndexOf("^") = 0) Then 'at beginning of word:
+                position = 0
+            ElseIf (theWord.IndexOf("^") = theWord.Length - 1) Then 'at end of word:
+                position = 1
+            ElseIf (theWord.IndexOf("^") < 0) Then 'not in word:
+                position = -1
+            Else 'somewhere in the middle of the word:
+                position = 2
+            End If
+            Console.WriteLine("starting...")
+
+            Dim r As Integer = 0
+            Dim s As Integer = 0
+
+            Select Case position
+                Case 2
+                    Select Case theWord.IndexOf("^")
+                        Case 2
+                            numFrags(0, 0) = 1
+                            totalNumFrags += 1
+                            Select Case theWord.Length
+                                Case 5, 6
+                                    numFrags(0, 1) = 1
+                                    totalNumFrags = totalNumFrags + 1
+                                Case 7
+                                    r = Rand.Next(1, 3)
+                                    numFrags(0, 1) = r
+                                    totalNumFrags = totalNumFrags + r
+                                Case 8
+                                    numFrags(0, 1) = 2
+                                    totalNumFrags = totalNumFrags + 2
+                                Case 9, 10
+                                    r = Rand.Next(2, 4)
+                                    numFrags(0, 1) = r
+                                    totalNumFrags = totalNumFrags + r
+                                Case 11
+                                    r = Rand.Next(2, 5)
+                                    numFrags(0, 1) = r
+                                    totalNumFrags = totalNumFrags + r
+                            End Select
+                        Case 3
+                            numFrags(0, 0) = 1
+                            totalNumFrags += 1
+                            Select Case theWord.Length
+                                Case 6, 7
+                                    numFrags(0, 1) = 1
+                                    totalNumFrags = totalNumFrags + 1
+                                Case 8
+                                    r = Rand.Next(1, 3)
+                                    numFrags(0, 1) = r
+                                    totalNumFrags = totalNumFrags + r
+                                Case 9
+                                    numFrags(0, 1) = 2
+                                    totalNumFrags = totalNumFrags + 2
+                                Case 10, 11
+                                    r = Rand.Next(2, 4)
+                                    numFrags(0, 1) = r
+                                    totalNumFrags = totalNumFrags + r
+                            End Select
+                        Case 4
+                            Select Case theWord.Length
+                                Case 7, 8
+                                    numFrags(0, 1) = 1
+                                    r = Rand.Next(1, 3)
+                                    numFrags(0, 0) = r
+                                    totalNumFrags = totalNumFrags + r + 1
+                                Case 9, 10
+                                    r = Rand.Next(1, 3)
+                                    s = Rand.Next(1, 3)
+                                    numFrags(0, 0) = r
+                                    numFrags(0, 1) = s
+                                    totalNumFrags = totalNumFrags + r + s
+                                Case 11
+                                    r = Rand.Next(1, 3)
+                                    s = Rand.Next(2, 4)
+                                    numFrags(0, 0) = r
+                                    numFrags(0, 1) = s
+                                    totalNumFrags = totalNumFrags + r + s
+                            End Select
+                        Case 5
+                            Select Case theWord.Length
+                                Case 8, 9
+                                    numFrags(0, 1) = 1
+                                    numFrags(0, 0) = 2
+                                    totalNumFrags = totalNumFrags + 3
+                                Case 10
+                                    r = Rand.Next(1, 3)
+                                    numFrags(0, 0) = 2
+                                    numFrags(0, 1) = r
+                                    totalNumFrags = totalNumFrags + r + 2
+                                Case 11
+                                    numFrags(0, 0) = 2
+                                    numFrags(0, 1) = 2
+                                    totalNumFrags = totalNumFrags + 4
+                            End Select
+                        Case 6
+                            Select Case theWord.Length
+                                Case 9, 10
+                                    numFrags(0, 1) = 1
+                                    r = Rand.Next(2, 4)
+                                    numFrags(0, 0) = r
+                                    totalNumFrags = totalNumFrags + r + 1
+                                Case 11
+                                    r = Rand.Next(2, 4)
+                                    s = Rand.Next(1, 3)
+                                    numFrags(0, 0) = r
+                                    numFrags(0, 1) = s
+                                    totalNumFrags = totalNumFrags + r + s
+                            End Select
+                        Case 7
+                            Select Case theWord.Length
+                                Case 10, 11
+                                    numFrags(0, 1) = 1
+                                    r = Rand.Next(2, 4)
+                                    numFrags(0, 0) = r
+                                    totalNumFrags = totalNumFrags + r + 1
+                            End Select
+
+                        Case 8
+                            Select Case theWord.Length
+                                Case 10, 11
+                                    numFrags(0, 1) = 1
+                                    r = Rand.Next(2, 5)
+                                    numFrags(0, 0) = r
+                                    totalNumFrags = totalNumFrags + r + 1
+                            End Select
+                    End Select
+                Case 1, 0
+                    Select Case theWord.Length
+                        Case 3, 4
+                            num = 1
+                        Case 5
+                            num = Rand.Next(1, 3)
+                        Case 6
+                            num = 2
+                        Case 7, 8
+                            num = Rand.Next(2, 4)
+                        Case 9
+                            num = Rand.Next(2, 5)
+                        Case 10
+                            num = Rand.Next(3, 5)
+                        Case 11
+                            num = Rand.Next(3, 6)
+                    End Select
+                    totalNumFrags = totalNumFrags + num
+                Case -1
+                    Select Case theWord.Length
+                        Case 4, 5
+                            num = 2
+                        Case 6, 7
+                            num = Rand.Next(2, 4)
+                        Case 8
+                            num = Rand.Next(2, 5)
+                        Case 9
+                            num = Rand.Next(3, 5)
+                        Case 10, 11
+                            num = Rand.Next(3, 6)
+                        Case 12
+                            num = Rand.Next(3, 7)
+                    End Select
+                    totalNumFrags = totalNumFrags + num
+            End Select
+            If loopCount = 199 Then
+                MsgBox("Timed Out" + theWord)
+                Exit Function
+            End If
+            Console.WriteLine(totalNumFrags)
+            loopCount += 1
+            lowEnd = If(totalNumFrags < lowEnd, totalNumFrags, lowEnd)
+            highEnd = If(totalNumFrags > highEnd, totalNumFrags, highEnd)
+        Loop Until loopCount = 100
+
+        lblMin.Text = Convert.ToString(Convert.ToInt32(lblMin.Text) + lowEnd)
+        lblMax.Text = Convert.ToString(Convert.ToInt32(lblMax.Text) + highEnd)
+    End Function
 
 
 

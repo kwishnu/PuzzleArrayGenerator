@@ -41,6 +41,7 @@ Partial Class Form1
         Me.lblCount = New System.Windows.Forms.Label()
         Me.Label3 = New System.Windows.Forms.Label()
         Me.GroupBox1 = New System.Windows.Forms.GroupBox()
+        Me.rbnDaily = New System.Windows.Forms.RadioButton()
         Me.rbnTheme = New System.Windows.Forms.RadioButton()
         Me.rbnHard = New System.Windows.Forms.RadioButton()
         Me.rbnMedium = New System.Windows.Forms.RadioButton()
@@ -57,6 +58,19 @@ Partial Class Form1
         Me.btnMakePuzzlePack = New System.Windows.Forms.Button()
         Me.txtNumPuzzles = New System.Windows.Forms.TextBox()
         Me.Label7 = New System.Windows.Forms.Label()
+        Me.btnNext = New System.Windows.Forms.Button()
+        Me.Label8 = New System.Windows.Forms.Label()
+        Me.Label9 = New System.Windows.Forms.Label()
+        Me.lblMax = New System.Windows.Forms.Label()
+        Me.lblMin = New System.Windows.Forms.Label()
+        Me.txtDailyNum = New System.Windows.Forms.TextBox()
+        Me.Label10 = New System.Windows.Forms.Label()
+        Me.txtMonth = New System.Windows.Forms.TextBox()
+        Me.Label11 = New System.Windows.Forms.Label()
+        Me.txtDay = New System.Windows.Forms.TextBox()
+        Me.Label12 = New System.Windows.Forms.Label()
+        Me.txtYear = New System.Windows.Forms.TextBox()
+        Me.Label13 = New System.Windows.Forms.Label()
         Me.GroupBox1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -98,7 +112,7 @@ Partial Class Form1
         '
         'txtClue
         '
-        Me.txtClue.Location = New System.Drawing.Point(379, 249)
+        Me.txtClue.Location = New System.Drawing.Point(379, 254)
         Me.txtClue.Margin = New System.Windows.Forms.Padding(6)
         Me.txtClue.Multiline = True
         Me.txtClue.Name = "txtClue"
@@ -118,7 +132,7 @@ Partial Class Form1
         'Label2
         '
         Me.Label2.AutoSize = True
-        Me.Label2.Location = New System.Drawing.Point(301, 249)
+        Me.Label2.Location = New System.Drawing.Point(301, 254)
         Me.Label2.Margin = New System.Windows.Forms.Padding(6, 0, 6, 0)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(56, 25)
@@ -220,23 +234,36 @@ Partial Class Form1
         '
         'GroupBox1
         '
+        Me.GroupBox1.Controls.Add(Me.rbnDaily)
         Me.GroupBox1.Controls.Add(Me.rbnTheme)
         Me.GroupBox1.Controls.Add(Me.rbnHard)
         Me.GroupBox1.Controls.Add(Me.rbnMedium)
         Me.GroupBox1.Controls.Add(Me.rbnEasy)
-        Me.GroupBox1.Location = New System.Drawing.Point(690, 138)
+        Me.GroupBox1.Location = New System.Drawing.Point(690, 136)
         Me.GroupBox1.Name = "GroupBox1"
-        Me.GroupBox1.Size = New System.Drawing.Size(294, 54)
+        Me.GroupBox1.Size = New System.Drawing.Size(321, 56)
         Me.GroupBox1.TabIndex = 22
         Me.GroupBox1.TabStop = False
+        '
+        'rbnDaily
+        '
+        Me.rbnDaily.AutoSize = True
+        Me.rbnDaily.Location = New System.Drawing.Point(258, 11)
+        Me.rbnDaily.Name = "rbnDaily"
+        Me.rbnDaily.Size = New System.Drawing.Size(58, 29)
+        Me.rbnDaily.TabIndex = 1
+        Me.rbnDaily.Text = "D"
+        Me.rbnDaily.UseVisualStyleBackColor = True
         '
         'rbnTheme
         '
         Me.rbnTheme.AutoSize = True
+        Me.rbnTheme.Checked = True
         Me.rbnTheme.Location = New System.Drawing.Point(196, 11)
         Me.rbnTheme.Name = "rbnTheme"
         Me.rbnTheme.Size = New System.Drawing.Size(56, 29)
         Me.rbnTheme.TabIndex = 0
+        Me.rbnTheme.TabStop = True
         Me.rbnTheme.Text = "T"
         Me.rbnTheme.UseVisualStyleBackColor = True
         '
@@ -253,12 +280,10 @@ Partial Class Form1
         'rbnMedium
         '
         Me.rbnMedium.AutoSize = True
-        Me.rbnMedium.Checked = True
         Me.rbnMedium.Location = New System.Drawing.Point(70, 11)
         Me.rbnMedium.Name = "rbnMedium"
         Me.rbnMedium.Size = New System.Drawing.Size(61, 29)
         Me.rbnMedium.TabIndex = 0
-        Me.rbnMedium.TabStop = True
         Me.rbnMedium.Text = "M"
         Me.rbnMedium.UseVisualStyleBackColor = True
         '
@@ -381,13 +406,141 @@ Partial Class Form1
         Me.Label7.TabIndex = 30
         Me.Label7.Text = "#"
         '
+        'btnNext
+        '
+        Me.btnNext.Location = New System.Drawing.Point(1014, 144)
+        Me.btnNext.Name = "btnNext"
+        Me.btnNext.Size = New System.Drawing.Size(145, 43)
+        Me.btnNext.TabIndex = 31
+        Me.btnNext.Text = "Check Frag"
+        Me.btnNext.UseVisualStyleBackColor = True
+        '
+        'Label8
+        '
+        Me.Label8.AutoSize = True
+        Me.Label8.Location = New System.Drawing.Point(1289, 186)
+        Me.Label8.Name = "Label8"
+        Me.Label8.Size = New System.Drawing.Size(53, 25)
+        Me.Label8.TabIndex = 46
+        Me.Label8.Text = "Max"
+        '
+        'Label9
+        '
+        Me.Label9.AutoSize = True
+        Me.Label9.Location = New System.Drawing.Point(1210, 186)
+        Me.Label9.Name = "Label9"
+        Me.Label9.Size = New System.Drawing.Size(47, 25)
+        Me.Label9.TabIndex = 47
+        Me.Label9.Text = "Min"
+        '
+        'lblMax
+        '
+        Me.lblMax.AutoSize = True
+        Me.lblMax.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.875!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblMax.Location = New System.Drawing.Point(1298, 144)
+        Me.lblMax.Name = "lblMax"
+        Me.lblMax.Size = New System.Drawing.Size(39, 42)
+        Me.lblMax.TabIndex = 44
+        Me.lblMax.Text = "0"
+        '
+        'lblMin
+        '
+        Me.lblMin.AutoSize = True
+        Me.lblMin.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.875!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblMin.Location = New System.Drawing.Point(1216, 144)
+        Me.lblMin.Name = "lblMin"
+        Me.lblMin.Size = New System.Drawing.Size(39, 42)
+        Me.lblMin.TabIndex = 45
+        Me.lblMin.Text = "0"
+        '
+        'txtDailyNum
+        '
+        Me.txtDailyNum.Location = New System.Drawing.Point(927, 190)
+        Me.txtDailyNum.Name = "txtDailyNum"
+        Me.txtDailyNum.Size = New System.Drawing.Size(66, 31)
+        Me.txtDailyNum.TabIndex = 29
+        Me.txtDailyNum.TextAlign = System.Windows.Forms.HorizontalAlignment.Right
+        '
+        'Label10
+        '
+        Me.Label10.AutoSize = True
+        Me.Label10.Location = New System.Drawing.Point(924, 224)
+        Me.Label10.Name = "Label10"
+        Me.Label10.Size = New System.Drawing.Size(78, 25)
+        Me.Label10.TabIndex = 30
+        Me.Label10.Text = "Daily #"
+        '
+        'txtMonth
+        '
+        Me.txtMonth.Location = New System.Drawing.Point(1303, 230)
+        Me.txtMonth.Name = "txtMonth"
+        Me.txtMonth.Size = New System.Drawing.Size(66, 31)
+        Me.txtMonth.TabIndex = 29
+        Me.txtMonth.TextAlign = System.Windows.Forms.HorizontalAlignment.Right
+        '
+        'Label11
+        '
+        Me.Label11.AutoSize = True
+        Me.Label11.Location = New System.Drawing.Point(1300, 264)
+        Me.Label11.Name = "Label11"
+        Me.Label11.Size = New System.Drawing.Size(72, 25)
+        Me.Label11.TabIndex = 30
+        Me.Label11.Text = "Month"
+        '
+        'txtDay
+        '
+        Me.txtDay.Location = New System.Drawing.Point(1303, 292)
+        Me.txtDay.Name = "txtDay"
+        Me.txtDay.Size = New System.Drawing.Size(66, 31)
+        Me.txtDay.TabIndex = 29
+        Me.txtDay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right
+        '
+        'Label12
+        '
+        Me.Label12.AutoSize = True
+        Me.Label12.Location = New System.Drawing.Point(1310, 326)
+        Me.Label12.Name = "Label12"
+        Me.Label12.Size = New System.Drawing.Size(50, 25)
+        Me.Label12.TabIndex = 30
+        Me.Label12.Text = "Day"
+        '
+        'txtYear
+        '
+        Me.txtYear.Location = New System.Drawing.Point(1303, 355)
+        Me.txtYear.Name = "txtYear"
+        Me.txtYear.Size = New System.Drawing.Size(66, 31)
+        Me.txtYear.TabIndex = 29
+        Me.txtYear.TextAlign = System.Windows.Forms.HorizontalAlignment.Right
+        '
+        'Label13
+        '
+        Me.Label13.AutoSize = True
+        Me.Label13.Location = New System.Drawing.Point(1307, 389)
+        Me.Label13.Name = "Label13"
+        Me.Label13.Size = New System.Drawing.Size(58, 25)
+        Me.Label13.TabIndex = 30
+        Me.Label13.Text = "Year"
+        '
         'Form1
         '
         Me.AcceptButton = Me.btnEnter
         Me.AutoScaleDimensions = New System.Drawing.SizeF(12.0!, 25.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(1395, 433)
+        Me.Controls.Add(Me.Label8)
+        Me.Controls.Add(Me.Label9)
+        Me.Controls.Add(Me.lblMax)
+        Me.Controls.Add(Me.lblMin)
+        Me.Controls.Add(Me.btnNext)
+        Me.Controls.Add(Me.Label13)
+        Me.Controls.Add(Me.Label12)
+        Me.Controls.Add(Me.Label11)
+        Me.Controls.Add(Me.txtYear)
+        Me.Controls.Add(Me.Label10)
+        Me.Controls.Add(Me.txtDay)
+        Me.Controls.Add(Me.txtMonth)
         Me.Controls.Add(Me.Label7)
+        Me.Controls.Add(Me.txtDailyNum)
         Me.Controls.Add(Me.txtNumPuzzles)
         Me.Controls.Add(Me.btnMakePuzzlePack)
         Me.Controls.Add(Me.btnCreatePuzzleFiles)
@@ -460,4 +613,18 @@ Partial Class Form1
     Friend WithEvents btnMakePuzzlePack As Button
     Friend WithEvents txtNumPuzzles As TextBox
     Friend WithEvents Label7 As Label
+    Friend WithEvents btnNext As Button
+    Friend WithEvents Label8 As Label
+    Friend WithEvents Label9 As Label
+    Friend WithEvents lblMax As Label
+    Friend WithEvents lblMin As Label
+    Friend WithEvents rbnDaily As RadioButton
+    Friend WithEvents txtDailyNum As TextBox
+    Friend WithEvents Label10 As Label
+    Friend WithEvents txtMonth As TextBox
+    Friend WithEvents Label11 As Label
+    Friend WithEvents txtDay As TextBox
+    Friend WithEvents Label12 As Label
+    Friend WithEvents txtYear As TextBox
+    Friend WithEvents Label13 As Label
 End Class
